@@ -2,6 +2,7 @@
 
 # channel lists:
 
+
 # 1)aparupa dey-->"UCj6TI5TV04I4AZ8seDWjceA"
 
 # 2)vidya vox-->"UCr-gTfI7au9UaEjNCbnp_Nw"
@@ -22,7 +23,6 @@ import pandas as pd
 from streamlit_option_menu import option_menu
 import time
 
-
 #------------------------------------# API Connection #------------------------------------------------------
 
 api_service_name = "youtube"
@@ -37,15 +37,17 @@ youtube = googleapiclient.discovery.build(api_service_name, api_version, develop
 with st.sidebar:
     opt = option_menu("Menu",
                     ['Home','ADD','Tables','Q/A'])
-            
-            
-if opt=="Home":
-        st.title(''':red[YOUTUBE DATA HARVESTING AND WAREHOUSING]''')
-        st.write("#")
-        st.title(''':blue[Domain]: Social Media''')
-        st.title('''# :blue[Skills take away from this project]: python scripting,data collection,streamlit,API integration,data management using SQL''')
-        st.title(":blue[overview]: buliding a simple ui with streamlit, retrieving data from youtube API, storing the data SQL as a WH, querying the data warehouse with SQL,and displaying the data in the streamlit app.")
-        st.title(":blue[developed by]: Arunachalam") 
+    
+
+if opt == "Home":
+    st.markdown("<h3 style='color: red;'>YOUTUBE DATA HARVESTING AND WAREHOUSING</h3>", unsafe_allow_html=True)
+    st.write("#")
+    st.markdown("<h4 style='color: blue;'>Domain: Social Media</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='color: blue;'>Skills take away from this project:</h4>", unsafe_allow_html=True)
+    st.write("Python scripting, data collection, Streamlit, API integration, data management using SQL")
+    st.markdown("<h4 style='color: blue;'>Overview:</h4>", unsafe_allow_html=True)
+    st.write("Building a simple UI with Streamlit, retrieving data from YouTube API, storing the data in SQL as a Data Warehouse, querying the Data Warehouse with SQL, and displaying the data in the Streamlit app.")
+    st.markdown("<h4 style='color: blue;'>Developed by: Arunachalam</h4>", unsafe_allow_html=True)
 
 
 if opt == "ADD":
@@ -62,7 +64,7 @@ if opt == "ADD":
             )
             response = request.execute()
             if 'items' in response:
-                i = response['items'][0]  # Assuming a single item for a unique channel_id
+                i = response['items'][0]  
                 data = {
                     "channel_name": i['snippet']['title'],
                     "channel_id": i["id"],
@@ -142,7 +144,7 @@ if opt == "ADD":
             def get_comment_details(video_ids):
                 comment_datas = []
                 for vid in video_ids:
-                    try:
+                    # try:
                         request = youtube.commentThreads().list(
                             part="snippet",
                             videoId=vid,
@@ -158,8 +160,7 @@ if opt == "ADD":
                                 "Comment_PublishedAt": i['snippet']['topLevelComment']['snippet']['publishedAt'].replace('T', ' ').replace('Z', '')
                             }
                             comment_datas.append(comment_data)
-                    except Exception as e:
-                        st.write(f"Error retrieving comments for video {vid}: {e}")
+             
                 return comment_datas
 
             # Convert comment details to DataFrame
@@ -167,18 +168,16 @@ if opt == "ADD":
            
 
 
-
-
 #---------------------------------------------/ sql part \ -----------------------------------------
 
-        # Database Configuration
-        config = {
-            "user": "root", "password": "arun2311",
-            "host": "127.0.0.1", "database": "youtube", "port": "3306"
-        }
 
-        # Insert Channel Details
-        try:
+            # Database Configuration
+            config = {
+                "user": "root", "password": "arun2311",
+                "host": "127.0.0.1", "database": "youtube", "port": "3306"
+            }
+
+            # Insert Channel Details
             connection = mysql.connector.connect(**config)
             cursor = connection.cursor()
 
@@ -194,7 +193,8 @@ if opt == "ADD":
             cursor.execute(create_query)
             connection.commit()
 
-            for _, row in channel_df.iterrows():
+            for i in channel_df.iterrows():
+                row = i[1]
                 insert_query = '''INSERT IGNORE INTO channels(
                                     channel_name, channel_id, channel_description,
                                     channel_playlistid, channel_subscriberCount,
@@ -212,15 +212,13 @@ if opt == "ADD":
                 )
                 cursor.execute(insert_query, values)
                 connection.commit()
+
             st.success("Channel details inserted successfully!")
-        except mysql.connector.Error as e:
-            st.error(f"Error inserting channel details: {e}")
-        finally:
+
             cursor.close()
             connection.close()
 
-        # Insert Video Details
-        try:
+            # Insert Video Details
             connection = mysql.connector.connect(**config)
             cursor = connection.cursor()
 
@@ -243,7 +241,8 @@ if opt == "ADD":
             cursor.execute(create_query)
             connection.commit()
 
-            for _, row in video_df.iterrows():
+            for i in video_df.iterrows():
+                row = i[1]
                 insert_query = '''INSERT IGNORE INTO videos(
                                     channel_name, channel_id, video_id, video_name,
                                     video_description, tags, published_at, views,
@@ -269,16 +268,14 @@ if opt == "ADD":
                 )
                 cursor.execute(insert_query, values)
                 connection.commit()
+
             st.success("Video details inserted successfully!")
-        except mysql.connector.Error as e:
-            st.error(f"Error inserting video details: {e}")
-        finally:
+
             cursor.close()
             connection.close()
 
-        # Insert Comment Details
-        if not comment_df.empty:
-            try:
+            # Insert Comment Details
+            if not comment_df.empty:
                 connection = mysql.connector.connect(**config)
                 cursor = connection.cursor()
 
@@ -292,7 +289,8 @@ if opt == "ADD":
                 cursor.execute(create_query)
                 connection.commit()
 
-                for _, row in comment_df.iterrows():
+                for i in comment_df.iterrows():
+                    row = i[1]
                     insert_query = '''INSERT IGNORE INTO comments(
                                         Channel_Id, Comment_Id, Comment_Text,
                                         Comment_Author, Comment_PublishedAt
@@ -307,12 +305,12 @@ if opt == "ADD":
                     )
                     cursor.execute(insert_query, values)
                     connection.commit()
+
                 st.success("Comment details inserted successfully!")
-            except mysql.connector.Error as e:
-                st.error(f"Error inserting comment details: {e}")
-            finally:
+
                 cursor.close()
                 connection.close()
+
 
 #----------------------------------- / streamlit \ -----------------------------------
 
